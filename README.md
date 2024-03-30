@@ -2,7 +2,7 @@
  Alfred Case Converter workflow
 
 
-  Now featuring Universal Action triggers and hotkeys for the following five actions:
+  Now featuring Universal Action triggers and hotkeys for the following actions:
 
 
 - Uppercase
@@ -17,7 +17,26 @@
 - Sentence Case - capitalizes only the first letter of the first word & converts the rest to lower case
 
   
+Additionally, there is list processing that allows you to take a sting that is "a list" (something that's comma-delimited, though the code is extensible to do things other than commas) and manipulate it:
 
+- Single Quote List: convert a list into a list of lines, with clean up, such that `1, 2,3,,4` becomes `'1', '2', '3', '4'`
+- Line Break List: convert a list into lines, with clean up, such that `1, 2,3,,4` becomes
+
+```
+1
+2
+3
+4
+```
+
+- Add Line Breaks to a List: similar to the last, but doesn't remove the delimiter, such that the output is
+
+```
+1,
+2,
+3,
+4
+```
 
 All of these are set to Copy to Clipboard and Paste by default.
 
