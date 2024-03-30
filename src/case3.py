@@ -14,26 +14,11 @@
 #
 
 import json
-import os
 import string
 import sys
 from functools import partial
 
 from titlecase import titlecase
-
-
-def SendDown(key):
-    string = str(key)
-    cmd = (
-        """osascript -e 'tell application "System Events" to key down (key code """
-        + string
-        + ")'"
-    )
-    os.system(cmd)
-
-
-def copy_selection():
-    SendDown(8)
 
 
 def to_upper(text):
