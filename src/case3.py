@@ -17,31 +17,38 @@ import json
 import string
 import sys
 from functools import partial
+from typing import Any, Callable, Dict, List
 
+# from https://muffinresearch.co.uk/titlecasepy-titlecase-in-python/
 from titlecase import titlecase
 
 
-def to_upper(text):
+def to_upper(text: str) -> str:
     return text.upper()
 
 
-def to_lower(text):
+def to_lower(text: str) -> str:
     return text.lower()
 
 
-def to_capitalized(text):
+def to_capitalized(text: str) -> str:
     text = string.capwords(text)
     return text
 
 
-def to_sentence_case(text):
+def to_sentence_case(text: str) -> str:
     text = text[0].upper() + text[1:].lower()
     return text
 
 
 def _decorate_delimited_list(
-    text, input_delimiter, trim_elements, prepend, append, output_delimiter
-):
+    text: str,
+    input_delimiter: str,
+    trim_elements: bool,
+    prepend: str,
+    append: str,
+    output_delimiter: str,
+) -> str:
     """a generic function to read in, amend, and output a list"""
     text_list = text.split(input_delimiter)
     if trim_elements:
@@ -59,7 +66,6 @@ quote_list = partial(
     append="'",
     output_delimiter=", ",
 )
-quote_list.__name__ = "quote_list"
 
 # convert a list into lines, with clean up, such that "1, 2,3,,4" becomes
 # 1
@@ -74,7 +80,6 @@ line_break_list = partial(
     append="",
     output_delimiter="\n",
 )
-line_break_list.__name__ = "line_break_list"
 
 # convert a list into a list of lines, with clean up, such that "1, 2,3,,4" becomes
 # 1,
@@ -89,51 +94,53 @@ add_line_breaks_to_list = partial(
     append="",
     output_delimiter=",\n",
 )
-add_line_breaks_to_list.__name__ = "add_line_breaks_to_list"
 
 
-# titlecase defined in separate file - from https://muffinresearch.co.uk/titlecasepy-titlecase-in-python/
-
-
-def create_alfred_items_list(the_string):
-    result = {"items": []}
-    transformations = {
+def create_alfred_items_object(text: str) -> Dict[str, List[Dict[str, Any]]]:
+    result: Dict[str, List[Dict[str, Any]]] = {"items": []}
+    # the dictionary of function display names mapping to the functions themselves
+    transformations: Dict[str, Callable[[str], str]] = {
         "Upper Case": to_upper,
         "Lower Case": to_lower,
         "Capitalized": to_capitalized,
         "Sentence Case": to_sentence_case,
-        "Title Case": titlecase,
         "Single Quote List": quote_list,
         "Line Break List": line_break_list,
         "Add Line Breaks to List": add_line_breaks_to_list,
+        # titlecase defined in separate file and imported at top
+        "Title Case": titlecase,
     }
 
-    for subtitle, func in transformations.items():
-        result_string = func(the_string)
+    for display_name, func in transformations.items():
+        transformed_text = func(text)
         result["items"].append(
             {
-                "title": result_string,
-                "subtitle": subtitle,
+                "title": transformed_text,
+                "subtitle": display_name,
                 "valid": True,
-                "uid": func.__name__,
+                "uid": display_name.lower().replace(" ", "_"),
                 "icon": {"path": "icon.png"},
-                "arg": result_string,
+                "arg": transformed_text,
             }
         )
 
     return result
 
 
-def main():
-    if len(sys.argv) > 1:
-        the_string = sys.argv[1]
-        if len(sys.argv) > 2:
-            my_source = sys.argv[2]
-            my_replacement_string = globals()[my_source](the_string)
-            sys.stdout.write(my_replacement_string)
-        else:
-            result = create_alfred_items_list(the_string)
-            sys.stdout.write(json.dumps(result))
+def main() -> None:
+    if len(sys.argv) < 2:
+        raise ValueError("at least one command line argument needed")
+
+    the_string = sys.argv[1]
+    if len(sys.argv) == 2:  # one command line argument
+        output = json.dumps(create_alfred_items_object(the_string))
+    elif len(sys.argv) == 3:  # two command line arguments
+        func = globals()[sys.argv[2]]
+        output = func(the_string)
+    else:
+        raise ValueError("no more than two command line arguments are expected")
+
+    sys.stdout.write(output)
     sys.stdout.flush()
 
 
