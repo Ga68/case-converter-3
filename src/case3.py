@@ -59,6 +59,7 @@ quote_list = partial(
     append="'",
     output_delimiter=", ",
 )
+quote_list.__name__ = "quote_list"
 
 # convert a list into lines, with clean up, such that "1, 2,3,,4" becomes
 # 1
@@ -73,6 +74,7 @@ line_break_list = partial(
     append="",
     output_delimiter="\n",
 )
+line_break_list.__name__ = "line_break_list"
 
 # convert a list into a list of lines, with clean up, such that "1, 2,3,,4" becomes
 # 1,
@@ -87,127 +89,52 @@ add_line_breaks_to_list = partial(
     append="",
     output_delimiter=",\n",
 )
+add_line_breaks_to_list.__name__ = "add_line_breaks_to_list"
+
 
 # titlecase defined in separate file - from https://muffinresearch.co.uk/titlecasepy-titlecase-in-python/
 
 
-def produceOutput(theString):
+def create_alfred_items_list(the_string):
     result = {"items": []}
-    # Add items to Alfred feedback with uids so Alfred will track frequency of use
+    transformations = {
+        "Upper Case": to_upper,
+        "Lower Case": to_lower,
+        "Capitalized": to_capitalized,
+        "Sentence Case": to_sentence_case,
+        "Title Case": titlecase,
+        "Single Quote List": quote_list,
+        "Line Break List": line_break_list,
+        "Add Line Breaks to List": add_line_breaks_to_list,
+    }
 
-    resultString = to_upper(theString)
-    result["items"].append(
-        {
-            "title": resultString,
-            "subtitle": "Upper Case",
-            "valid": True,
-            "uid": "uppercase",
-            "icon": {"path": "icon.png"},
-            "arg": resultString,
-        }
-    )
+    for subtitle, func in transformations.items():
+        result_string = func(the_string)
+        result["items"].append(
+            {
+                "title": result_string,
+                "subtitle": subtitle,
+                "valid": True,
+                "uid": func.__name__,
+                "icon": {"path": "icon.png"},
+                "arg": result_string,
+            }
+        )
 
-    resultString = to_lower(theString)
-    result["items"].append(
-        {
-            "title": resultString,
-            "subtitle": "Lower Case",
-            "valid": True,
-            "uid": "lowercase",
-            "icon": {"path": "icon.png"},
-            "arg": resultString,
-        }
-    )
-
-    resultString = to_capitalized(theString)
-    result["items"].append(
-        {
-            "title": resultString,
-            "subtitle": "Capitalized",
-            "valid": True,
-            "uid": "Capitalized",
-            "icon": {"path": "icon.png"},
-            "arg": resultString,
-        }
-    )
-
-    resultString = to_sentence_case(theString)
-    result["items"].append(
-        {
-            "title": resultString,
-            "subtitle": "Sentence Case",
-            "valid": True,
-            "uid": "Sentencecase",
-            "icon": {"path": "icon.png"},
-            "arg": resultString,
-        }
-    )
-
-    resultString = titlecase(theString)
-    result["items"].append(
-        {
-            "title": resultString,
-            "subtitle": "Title Case",
-            "valid": True,
-            "uid": "titlecase",
-            "icon": {"path": "icon.png"},
-            "arg": resultString,
-        }
-    )
-
-    resultString = quote_list(theString)
-    result["items"].append(
-        {
-            "title": resultString,
-            "subtitle": "Single Quote List",
-            "valid": True,
-            "uid": "Quotelist",
-            "icon": {"path": "icon.png"},
-            "arg": resultString,
-        }
-    )
-
-    resultString = line_break_list(theString)
-    result["items"].append(
-        {
-            "title": resultString,
-            "subtitle": "Line Break List",
-            "valid": True,
-            "uid": "Linebreaklist",
-            "icon": {"path": "icon.png"},
-            "arg": resultString,
-        }
-    )
-
-    resultString = add_line_breaks_to_list(theString)
-    result["items"].append(
-        {
-            "title": resultString,
-            "subtitle": "Add Line Breaks to List",
-            "valid": True,
-            "uid": "Addlinebreakstolist",
-            "icon": {"path": "icon.png"},
-            "arg": resultString,
-        }
-    )
-
-    print(json.dumps(result))
+    return result
 
 
 def main():
-    if len(sys.argv) > 2:
-        theString = sys.argv[1]
-        mySource = sys.argv[2]
-
-        myReplacementString = eval(mySource)
-
-        myReplacementString = globals()[mySource](theString)
-        sys.stdout.write(myReplacementString)
-        sys.stdout.flush()
-
-    else:
-        theString = sys.argv[1]
-        produceOutput(theString)
+    if len(sys.argv) > 1:
+        the_string = sys.argv[1]
+        if len(sys.argv) > 2:
+            my_source = sys.argv[2]
+            my_replacement_string = globals()[my_source](the_string)
+            sys.stdout.write(my_replacement_string)
+        else:
+            result = create_alfred_items_list(the_string)
+            sys.stdout.write(json.dumps(result))
+    sys.stdout.flush()
 
 
 if __name__ == "__main__":
