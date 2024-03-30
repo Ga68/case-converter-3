@@ -17,6 +17,7 @@ import json
 import os
 import string
 import sys
+from functools import partial
 
 from titlecase import titlecase
 
@@ -52,6 +53,55 @@ def to_sentence_case(text):
     text = text[0].upper() + text[1:].lower()
     return text
 
+
+def _decorate_delimited_list(
+    text, input_delimiter, trim_elements, prepend, append, output_delimiter
+):
+    """a generic function to read in, amend, and output a list"""
+    text_list = text.split(input_delimiter)
+    if trim_elements:
+        text_list = [elem.strip() for elem in text_list if elem.strip()]
+    return output_delimiter.join([f"{prepend}{elem}{append}" for elem in text_list])
+
+
+# add single quotes to a list, with clean up, such that "1, 2,3,,4" becomes
+# '1', '2', '3', '4'
+quote_list = partial(
+    _decorate_delimited_list,
+    input_delimiter=",",
+    trim_elements=True,
+    prepend="'",
+    append="'",
+    output_delimiter=", ",
+)
+
+# convert a list into lines, with clean up, such that "1, 2,3,,4" becomes
+# 1
+# 2
+# 3
+# 4
+line_break_list = partial(
+    _decorate_delimited_list,
+    input_delimiter=",",
+    trim_elements=True,
+    prepend="",
+    append="",
+    output_delimiter="\n",
+)
+
+# convert a list into a list of lines, with clean up, such that "1, 2,3,,4" becomes
+# 1,
+# 2,
+# 3,
+# 4
+add_line_breaks_to_list = partial(
+    _decorate_delimited_list,
+    input_delimiter=",",
+    trim_elements=True,
+    prepend="",
+    append="",
+    output_delimiter=",\n",
+)
 
 # titlecase defined in separate file - from https://muffinresearch.co.uk/titlecasepy-titlecase-in-python/
 
@@ -115,6 +165,42 @@ def produceOutput(theString):
             "subtitle": "Title Case",
             "valid": True,
             "uid": "titlecase",
+            "icon": {"path": "icon.png"},
+            "arg": resultString,
+        }
+    )
+
+    resultString = quote_list(theString)
+    result["items"].append(
+        {
+            "title": resultString,
+            "subtitle": "Single Quote List",
+            "valid": True,
+            "uid": "Quotelist",
+            "icon": {"path": "icon.png"},
+            "arg": resultString,
+        }
+    )
+
+    resultString = line_break_list(theString)
+    result["items"].append(
+        {
+            "title": resultString,
+            "subtitle": "Line Break List",
+            "valid": True,
+            "uid": "Linebreaklist",
+            "icon": {"path": "icon.png"},
+            "arg": resultString,
+        }
+    )
+
+    resultString = add_line_breaks_to_list(theString)
+    result["items"].append(
+        {
+            "title": resultString,
+            "subtitle": "Add Line Breaks to List",
+            "valid": True,
+            "uid": "Addlinebreakstolist",
             "icon": {"path": "icon.png"},
             "arg": resultString,
         }
